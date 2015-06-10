@@ -2,6 +2,7 @@ package ca.redtoad.eventlog
 
 class SpringSecurityEvent {
 
+    Integer userId = 0
     String username
     String sessionId
     String eventName
@@ -10,6 +11,7 @@ class SpringSecurityEvent {
     Date dateCreated
 
     static constraints = {
+        userId(nullable: false)
         username(nullable: true)
         sessionId(nullable: true)
         eventName()

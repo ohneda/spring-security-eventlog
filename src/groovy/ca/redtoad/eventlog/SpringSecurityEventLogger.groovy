@@ -1,14 +1,21 @@
 package ca.redtoad.eventlog
 
+import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.security.web.authentication.AuthenticationSuccessHandler
+
+import javax.servlet.ServletException
 import javax.servlet.http.*
 import org.apache.commons.logging.LogFactory
 import org.springframework.context.ApplicationListener
 import org.springframework.security.authentication.event.AbstractAuthenticationEvent
 import org.springframework.security.core.Authentication
-import org.springframework.security.web.authentication.logout.LogoutHandler 
+import org.springframework.security.web.authentication.logout.LogoutHandler
 import org.springframework.security.web.authentication.switchuser.AuthenticationSwitchUserEvent
 
 class SpringSecurityEventLogger implements ApplicationListener<AbstractAuthenticationEvent>, LogoutHandler {
+
+    @Autowired
+    private HttpServletRequest request
  
     private static final log = LogFactory.getLog(this)
 
@@ -17,7 +24,8 @@ class SpringSecurityEventLogger implements ApplicationListener<AbstractAuthentic
             def username = authentication?.principal?.hasProperty('username')?.getProperty(authentication?.principal) ?: authentication?.principal
             def sessionId = authentication?.details?.sessionId
             SpringSecurityEvent.withTransaction {
-                def event = new SpringSecurityEvent(username: username,
+                def event = new SpringSecurityEvent(userId: authentication?.principal?.id,
+                                                    username: username,
                                                     eventName: eventName,
                                                     sessionId: sessionId,
                                                     remoteAddress: remoteAddress,
@@ -31,7 +39,8 @@ class SpringSecurityEventLogger implements ApplicationListener<AbstractAuthentic
     }
 
     void onApplicationEvent(AbstractAuthenticationEvent event) {
-        logAuthenticationEvent(event.class.simpleName, event.authentication, event.authentication?.details?.remoteAddress, switchedUsername(event))
+        String remoteAddress = request.getHeader("x-forwarded-for") ?:request.getHeader("x_forwarded_for")?:event.authentication?.details?.remoteAddress
+        logAuthenticationEvent(event.class.simpleName, event.authentication, remoteAddress, switchedUsername(event))
     }
 
     void logout(HttpServletRequest request, HttpServletResponse response, Authentication authentication) {
