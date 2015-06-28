@@ -23,8 +23,9 @@ class SpringSecurityEventLogger implements ApplicationListener<AbstractAuthentic
         try {
             def username = authentication?.principal?.hasProperty('username')?.getProperty(authentication?.principal) ?: authentication?.principal
             def sessionId = authentication?.details?.sessionId
+            def userId = ( authentication?.principal?.hasProperty("id") ? authentication?.principal?.id : 0 ) ?: 0
             SpringSecurityEvent.withTransaction {
-                def event = new SpringSecurityEvent(userId: authentication?.principal?.id,
+                def event = new SpringSecurityEvent(userId: userId,
                                                     username: username,
                                                     eventName: eventName,
                                                     sessionId: sessionId,
