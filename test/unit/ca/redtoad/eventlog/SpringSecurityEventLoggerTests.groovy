@@ -2,7 +2,9 @@ package ca.redtoad.eventlog
 
 import grails.test.mixin.Mock
 import org.codehaus.groovy.grails.plugins.testing.GrailsMockHttpServletRequest
+import org.junit.Rule
 import org.junit.Test
+import org.junit.rules.ExpectedException
 import org.springframework.http.HttpHeaders
 import org.springframework.mock.web.MockHttpServletRequest
 import org.springframework.security.authentication.TestingAuthenticationToken
@@ -81,40 +83,7 @@ class SpringSecurityEventLoggerTests {
     @Test
     void testGetRemoteAddrFromXForwardedFor(){
 
-        def principal = new UserDetails() {
-
-            public Integer id = 1
-
-            @Override
-            Collection<GrantedAuthority> getAuthorities() {
-                return null
-            }
-            @Override
-            String getPassword() {
-                return "test password"
-            }
-            @Override
-            String getUsername() {
-                return "test user"
-            }
-            @Override
-            boolean isAccountNonExpired() {
-                return true
-            }
-            @Override
-            boolean isAccountNonLocked() {
-                return true
-            }
-            @Override
-            boolean isCredentialsNonExpired() {
-                return true
-            }
-            @Override
-            boolean isEnabled() {
-                return true
-            }
-        }
-        def authentication = new TestingAuthenticationToken(principal, [])
+        def authentication = new TestingAuthenticationToken(testPrincipal, [])
         authentication.setDetails(remoteAddress : "192.168.1.0")
 
         // test for default remote address (without x-forwarded-for header)
@@ -152,4 +121,62 @@ class SpringSecurityEventLoggerTests {
         assert SpringSecurityEvent.list()[4].remoteAddress == "192.168.1.4"
     }
 
+    @Rule
+    public ExpectedException exception = ExpectedException.none();
+
+    @Test
+    void testRuntimeExceptionNotThrownToOutside(){
+
+        def authentication = new TestingAuthenticationToken(testPrincipal, [])
+
+        // もしlogAuthenticationEventがRuntimeExceptionを投げるなら下記テストが成功する
+        // exception.expect(RuntimeException.class)
+        // logger.logAuthenticationEvent(null, authentication, "192.168.0.1", null)
+
+        // 今回、logAuthenticationEvent を、外部にRuntimeExceptionを投げないように修正したので、下記テストが成功する
+        // 第一引数の　eventName をnullにしているので、SpringSecurityEventにおいて、ValudationException（RuntimeExceptionサブクラス）が発生するが、
+        // 例外は内部でcatchされて外部へは投げられない
+        exception.expect(null)
+        logger.logAuthenticationEvent(null, authentication, "192.168.0.1", null)
+    }
+
+    private UserDetails getTestPrincipal(){
+
+        def principal = new UserDetails() {
+
+            public Integer id = 1
+
+            @Override
+            Collection<GrantedAuthority> getAuthorities() {
+                return null
+            }
+            @Override
+            String getPassword() {
+                return "test password"
+            }
+            @Override
+            String getUsername() {
+                return "test user"
+            }
+            @Override
+            boolean isAccountNonExpired() {
+                return true
+            }
+            @Override
+            boolean isAccountNonLocked() {
+                return true
+            }
+            @Override
+            boolean isCredentialsNonExpired() {
+                return true
+            }
+            @Override
+            boolean isEnabled() {
+                return true
+            }
+        }
+        principal
+    }
 }
+
+

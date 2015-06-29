@@ -35,7 +35,6 @@ class SpringSecurityEventLogger implements ApplicationListener<AbstractAuthentic
             }
         } catch (RuntimeException e) {
             log.error("error saving spring security event", e)
-            throw e
         }
     }
 
