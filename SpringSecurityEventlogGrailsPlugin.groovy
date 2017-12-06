@@ -6,7 +6,7 @@ import ca.redtoad.eventlog.SpringSecurityEventLogger
 
 class SpringSecurityEventlogGrailsPlugin {
 
-    def version = "0.3"
+    def version = "0.3-fms-0.1"
     def grailsVersion = "1.3 > *"
     def dependsOn = [springSecurityCore: '1.0 > *']
     def pluginExcludes = [
