@@ -11,6 +11,7 @@ import org.springframework.security.authentication.event.AbstractAuthenticationE
 import org.springframework.security.core.Authentication
 import org.springframework.security.web.authentication.logout.LogoutHandler
 import org.springframework.security.web.authentication.switchuser.AuthenticationSwitchUserEvent
+import org.springframework.security.authentication.RememberMeAuthenticationToken
 
 class SpringSecurityEventLogger implements ApplicationListener<AbstractAuthenticationEvent>, LogoutHandler {
 
@@ -20,17 +21,35 @@ class SpringSecurityEventLogger implements ApplicationListener<AbstractAuthentic
     private static final log = LogFactory.getLog(this)
 
     void logAuthenticationEvent(String eventName, Authentication authentication, String remoteAddress, String switchedUsername) {
+
+        def authorizationToken = authentication?.class?.simpleName
+
         try {
             def username = authentication?.principal?.hasProperty('username')?.getProperty(authentication?.principal) ?: authentication?.principal
             def sessionId = authentication?.details?.sessionId
             def userId = ( authentication?.principal?.hasProperty("id") ? authentication?.principal?.id : 0 ) ?: 0
+
+            def userAgent = request?.getHeader( 'user-agent' )
+
+            if(userAgent.size() > 255){
+                log.warn("Long UserAgent: ${userAgent}" )
+                userAgent = userAgent(0,255)
+            }
+
+            if(username.size() > 255){
+                log.warn("Long username: ${username}")
+            }
+
+
             SpringSecurityEvent.withTransaction {
                 def event = new SpringSecurityEvent(userId: userId,
                                                     username: username,
                                                     eventName: eventName,
                                                     sessionId: sessionId,
                                                     remoteAddress: remoteAddress,
-                                                    switchedUsername: switchedUsername)
+                                                    switchedUsername: switchedUsername,
+                                                    userAgent: userAgent,
+                                                    authorizationToken: authorizationToken)
                 event.save(failOnError:true)
             }
         } catch (RuntimeException e) {

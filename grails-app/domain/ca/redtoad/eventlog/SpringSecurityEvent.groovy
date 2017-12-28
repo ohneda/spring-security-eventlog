@@ -9,6 +9,8 @@ class SpringSecurityEvent {
     String remoteAddress
     String switchedUsername
     Date dateCreated
+    String userAgent
+    String authorizationToken
 
     static constraints = {
         userId(nullable: false)
@@ -18,6 +20,8 @@ class SpringSecurityEvent {
         remoteAddress(nullable: true)
         switchedUsername(nullable: true)
         dateCreated()
+        userAgent nullable: true
+        authorizationToken nullable: true
     }
 
     static mapping = {
